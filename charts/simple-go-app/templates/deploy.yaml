@@ -30,6 +30,8 @@ spec:
         - name: nginx
           image: {{ .Values.ecrEndpoint }}/cubbit-task-nginx:{{ .Values.ecrImageId }}
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
           ports:
           - containerPort: 88
           envFrom:
@@ -80,8 +82,17 @@ spec:
               name: nginx-conf
               subPath: nginx.conf
         - name: mygoapp
+          env:
+          - name: API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: myapp-secret
+                key: API_KEY
           image: {{ .Values.ecrEndpoint }}/cubbit-task-app:{{ .Values.ecrImageId }}
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
           ports:
           - containerPort: 8080
           resources:
