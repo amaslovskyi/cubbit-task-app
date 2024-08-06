@@ -4,11 +4,10 @@ metadata:
   labels:
     app: mygoapp
   name: mygoapp
-  namespace: mygoapp-ns
+  namespace: {{ .Values.environment }}-mygoapp-ns
 spec:
   minReadySeconds: 5
   replicas: {{ .Values.replicaCount }}
-
   revisionHistoryLimit: 3
   selector:
     matchLabels:
@@ -27,17 +26,15 @@ spec:
         runAsUser: 82
         runAsGroup: 82
         fsGroup: 82
-          # application environment
-          envFrom:
-            - configMapRef:
-                name: mygoapp-app-config
       containers:
-        # container with nginx
         - name: nginx
           image: {{ .Values.ecrEndpoint }}/cubbit-task-nginx:{{ .Values.ecrImageId }}
           imagePullPolicy: IfNotPresent
           ports:
           - containerPort: 88
+          envFrom:
+            - configMapRef:
+                name: mygoapp-nginx-conf
           resources:
             limits:
               cpu: "250m"
@@ -49,8 +46,6 @@ spec:
             preStop:
               exec:
                 command: ["/bin/sh", "-c", "sleep 40; /usr/sbin/nginx", "-s", "quit"]
-
-          # # Probes
           startupProbe:
             httpGet:
               path: /api/status
@@ -62,7 +57,6 @@ spec:
             failureThreshold: 3
             periodSeconds: 5
             timeoutSeconds: 3
-
           readinessProbe:
             httpGet:
               path: /api/status
@@ -73,7 +67,6 @@ spec:
             failureThreshold: 3
             periodSeconds: 10
             timeoutSeconds: 3
-
           livenessProbe:
             httpGet:
               path: /nginx-ping
@@ -81,23 +74,16 @@ spec:
             failureThreshold: 5
             periodSeconds: 10
             timeoutSeconds: 3
-
           volumeMounts:
-            # nginx main configuration file
             - mountPath: /etc/nginx/nginx.conf
               readOnly: true
               name: nginx-conf
               subPath: nginx.conf
-
-        # container with GO
         - name: mygoapp
           image: {{ .Values.ecrEndpoint }}/cubbit-task-app:{{ .Values.ecrImageId }}
           imagePullPolicy: IfNotPresent
           ports:
           - containerPort: 8080
-          envFrom:
-            - configMapRef:
-                name: mygoapp-app-config
           resources:
             limits:
               cpu: "250m"
@@ -105,8 +91,6 @@ spec:
             requests:
               cpu: "50m"
               memory: "150Mi"
-
-          # # Probes
           startupProbe:
             httpGet:
               path: /api/status
@@ -118,7 +102,6 @@ spec:
             failureThreshold: 3
             periodSeconds: 5
             timeoutSeconds: 3
-
           readinessProbe:
             httpGet:
               path: /api/status
@@ -129,7 +112,6 @@ spec:
             failureThreshold: 3
             periodSeconds: 10
             timeoutSeconds: 3
-
           livenessProbe:
             httpGet:
               path: /api/status
@@ -140,9 +122,7 @@ spec:
             failureThreshold: 5
             periodSeconds: 10
             timeoutSeconds: 3
-
       volumes:
-        # configMap with nginx configuration
         - name: nginx-conf
           configMap:
             name: mygoapp-nginx-conf
