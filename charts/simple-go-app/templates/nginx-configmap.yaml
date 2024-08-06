@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mygoapp-nginx-conf
+  namespace: mygoapp-ns
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+data:
+  nginx.conf: |
+    worker_processes auto;
+    daemon off;
+    pid /tmp/nginx.pid;
+    events {
+        worker_connections 16384;
+    }
+
+    http {
+        real_ip_header X-Forwarded-For;
+        real_ip_recursive on;
+        server_tokens off;
+        client_max_body_size 20M;
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+    }
+
+    server {
+        listen 88;
+        charset utf-8;
+
+        location = /service/status {
+            return 200;
+        }
+
+        # for k8s readiness and liveness
+        location /api/status {
+            proxy_set_header Host 'localhost';
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Request_id $request_id;
+
+            proxy_pass http://127.0.0.1::8080/;
+            proxy_redirect off;
+            proxy_intercept_errors on;
+        }
+
+        location / {
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+
+            proxy_pass http://127.0.0.1::8080;
+            proxy_redirect off;
+            proxy_intercept_errors on;
+
+        }
+
+        # for k8s liveness probes
+        location = /nginx-ping {
+            access_log off;
+            return 200;
+        }
+    }
