@@ -9,12 +9,14 @@ on:
 jobs:
   prep:
     runs-on: ubuntu-latest
+    outputs:
+      commit_hash: ${{ steps.get_commit_hash.outputs.commit_hash }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Get short commit hash
         id: get_commit_hash
-        run: echo "COMMIT_HASH=$(git rev-parse --short=7 HEAD)" >> $GITHUB_ENV
+        run: echo "commit_hash=$(git rev-parse --short=7 HEAD)" >> $GITHUB_OUTPUT
 
   docker_login:
     needs: prep
@@ -29,15 +31,17 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
   docker_build_push:
-    needs: docker_login
+    needs: [prep, docker_login]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
       - name: Build and Push Docker Image Nginx
         run: |
-          docker build -f ./docker/nginx/Dockerfile -t ${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-nginx:${{ env.COMMIT_HASH }} --push .
+          docker build -f ./docker/nginx/Dockerfile -t ${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-nginx:${{ needs.prep.outputs.commit_hash }} --push .
       - name: Build and Push Docker Image App
         run: |
-          docker build -f ./docker/simple-go-app/Dockerfile -t ${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-app:${{ env.COMMIT_HASH }} --push .
+          docker build -f ./docker/simple-go-app/Dockerfile -t ${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-app:${{ needs.prep.outputs.commit_hash }} --push .
 
   prep_kubeconf:
     needs: docker_build_push
@@ -62,9 +66,11 @@ jobs:
           export KUBECONFIG=./kubeconfig
 
   deploy:
-    needs: prep_kubeconf
+    needs: [prep_kubeconf, prep]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
       - name: Deploy mygoapp with Helm
         run: |
           if [[ ${{ github.ref }} == 'refs/heads/main' ]]; then
@@ -74,7 +80,7 @@ jobs:
           fi
           helm upgrade --install mygoapp ./charts/simple-go-app \
             --set image.repository=${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-app \
-            --set image.tag=${{ env.COMMIT_HASH }} \
+            --set image.tag=${{ needs.prep.outputs.commit_hash }} \
             --set environment=${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }} \
             --set apiKey=${{ secrets.API_KEY }} \
             --namespace ${{ github.ref == 'refs/heads/main' && 'prod-mygoapp-ns' || 'staging-mygoapp-ns' }}
