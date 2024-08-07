@@ -28,11 +28,11 @@ jobs:
 
       - name: Build and Push Docker Image Nginx
         run: |
-          docker build -f ./docker/nginx/Dockerfile -t ${{ secrets.DOCKER_HUB_USERNAME }}/cubbit-task-nginx:${{ env.COMMIT_HASH }} --push .        
+          docker build -f ./docker/nginx/Dockerfile -t ${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-nginx:${{ env.COMMIT_HASH }} --push .        
       
       - name: Build and Push Docker Image App
         run: |
-          docker build -f ./docker/simple-go-app/Dockerfile -t ${{ secrets.DOCKER_HUB_USERNAME }}/cubbit-task-app:${{ env.COMMIT_HASH }} --push .
+          docker build -f ./docker/simple-go-app/Dockerfile -t ${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-app:${{ env.COMMIT_HASH }} --push .
 
       - name: Install Helm
         uses: azure/setup-helm@v1
@@ -64,7 +64,7 @@ jobs:
             kubectl create ns staging-mygoapp-ns --dry-run=client -o yaml | kubectl apply -f -
           fi
           helm upgrade --install mygoapp ./charts/simple-go-app \
-            --set image.repository=${{ secrets.DOCKER_HUB_USERNAME }}/cubbit-task-app \
+            --set image.repository=${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-app \
             --set image.tag=${{ env.COMMIT_HASH }} \
             --set environment=${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }} \
             --set apiKey=${{ secrets.API_KEY }} \
