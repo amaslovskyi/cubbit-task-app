@@ -58,7 +58,11 @@ jobs:
             echo "${{ secrets.STAGING_KUBECONFIG }}" | base64 -d > kubeconfig
           fi
           chmod 600 kubeconfig
-          export KUBECONFIG=./kubeconfig
+      - name: Upload kubeconfig
+        uses: actions/upload-artifact@v2
+        with:
+          name: kubeconfig
+          path: ./kubeconfig
 
   deploy:
     needs: [prep_kubeconf, prep]
@@ -66,6 +70,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Download kubeconfig
+        uses: actions/download-artifact@v2
+        with:
+          name: kubeconfig
+      - name: Set KUBECONFIG environment variable
+        run: echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
       - name: Deploy mygoapp with Helm
         run: |
           if [[ ${{ github.ref }} == 'refs/heads/main' ]]; then
