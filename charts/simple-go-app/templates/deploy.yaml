@@ -28,7 +28,7 @@ spec:
         fsGroup: 82
       containers:
         - name: nginx
-          image: {{ .Values.ecrEndpoint }}/cubbit-task-nginx:{{ .Values.ecrImageId }}
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
