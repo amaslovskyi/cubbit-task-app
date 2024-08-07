@@ -7,43 +7,50 @@ on:
       - staging
 
 jobs:
-  deploy:
+  prep:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Get short commit hash
+        id: get_commit_hash
+        run: echo "COMMIT_HASH=$(git rev-parse --short=7 HEAD)" >> $GITHUB_ENV
 
+  docker_login:
+    needs: prep
+    runs-on: ubuntu-latest
+    steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-
       - name: Log in to DockerHub
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_HUB_USER_NAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Get short commit hash
-        id: get_commit_hash
-        run: echo "COMMIT_HASH=$(git rev-parse --short=7 HEAD)" >> $GITHUB_ENV
-
+  docker_build_push:
+    needs: docker_login
+    runs-on: ubuntu-latest
+    steps:
       - name: Build and Push Docker Image Nginx
         run: |
-          docker build -f ./docker/nginx/Dockerfile -t ${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-nginx:${{ env.COMMIT_HASH }} --push .        
-      
+          docker build -f ./docker/nginx/Dockerfile -t ${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-nginx:${{ env.COMMIT_HASH }} --push .
       - name: Build and Push Docker Image App
         run: |
           docker build -f ./docker/simple-go-app/Dockerfile -t ${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-app:${{ env.COMMIT_HASH }} --push .
 
+  prep_kubeconf:
+    needs: docker_build_push
+    runs-on: ubuntu-latest
+    steps:
       - name: Install Helm
         uses: azure/setup-helm@v1
         with:
           version: 'latest'
-
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
         with:
           version: 'latest'
-
       - name: Set up kubeconfig
         run: |
           if [[ ${{ github.ref }} == 'refs/heads/main' ]]; then
@@ -53,9 +60,11 @@ jobs:
           fi
           chmod 600 kubeconfig
           export KUBECONFIG=./kubeconfig
-          chmod 600 kubeconfig
-          export KUBECONFIG=./kubeconfig
 
+  deploy:
+    needs: prep_kubeconf
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy mygoapp with Helm
         run: |
           if [[ ${{ github.ref }} == 'refs/heads/main' ]]; then
