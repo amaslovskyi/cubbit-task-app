@@ -33,10 +33,10 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
       - name: Build and Push Docker Image Nginx
         run: |
-          docker build -f ./docker/nginx/Dockerfile -t ${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-nginx:${{ needs.prep.outputs.commit_hash }} --push .
+          docker buildx build --platform linux/arm64 -f ./docker/nginx/Dockerfile -t ${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-nginx:${{ needs.prep.outputs.commit_hash }} --push .
       - name: Build and Push Docker Image App
         run: |
-          docker build -f ./docker/simple-go-app/Dockerfile -t ${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-app:${{ needs.prep.outputs.commit_hash }} --push .
+          docker buildx build --platform linux/arm64 -f ./docker/simple-go-app/Dockerfile -t ${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-app:${{ needs.prep.outputs.commit_hash }} --push .
 
   prep_kubeconf:
     needs: docker
