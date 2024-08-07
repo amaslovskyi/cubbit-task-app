@@ -26,13 +26,13 @@ jobs:
         id: get_commit_hash
         run: echo "COMMIT_HASH=$(git rev-parse --short=7 HEAD)" >> $GITHUB_ENV
 
-      - name: Build and Push Docker Image App
+      - name: Build and Push Docker Image Nginx
         run: |
-          docker build -f docker/simple-go-app/Dockerfile -t ${{ secrets.DOCKER_HUB_USERNAME }}/cubbit-task-nginx:${{ env.COMMIT_HASH }} --push .        
+          docker build -f ./docker/nginx/Dockerfile -t ${{ secrets.DOCKER_HUB_USERNAME }}/cubbit-task-nginx:${{ env.COMMIT_HASH }} --push .        
       
       - name: Build and Push Docker Image App
         run: |
-          docker build -f docker/simple-go-app/Dockerfile -t ${{ secrets.DOCKER_HUB_USERNAME }}/cubbit-task-app:${{ env.COMMIT_HASH }} --push .
+          docker build -f ./docker/simple-go-app/Dockerfile -t ${{ secrets.DOCKER_HUB_USERNAME }}/cubbit-task-app:${{ env.COMMIT_HASH }} --push .
 
       - name: Install Helm
         uses: azure/setup-helm@v1
