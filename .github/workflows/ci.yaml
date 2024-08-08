@@ -73,7 +73,7 @@ jobs:
         run: echo "Deployment to prod approved"
 
   deploy:
-    needs: [prep_kubeconf, prep, approve_prod]
+    needs: [prep_kubeconf, prep]
     runs-on: ubuntu-latest
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }}
@@ -86,6 +86,16 @@ jobs:
           name: kubeconfig
       - name: Set KUBECONFIG environment variable
         run: echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
+      - name: Wait for production approval
+        if: github.ref == 'refs/heads/main'
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.token }}
+          approvers: amaslovskyi
+          minimum-approvals: 1
+          issue-title: "Deploying to Production"
+          issue-body: "Please approve or deny the deployment to production"
+          exclude-workflow-initiator-as-approver: false
       - name: Deploy mygoapp with Helm
         run: |
           if [[ ${{ github.ref }} == 'refs/heads/main' ]]; then
