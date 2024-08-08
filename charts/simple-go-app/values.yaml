@@ -3,4 +3,3 @@ environment: "staging"
 image:
   repository: "shatten/cubbit-task-app"
   tag: "1.1"
-apiKey: "ckFuZDBtM3hBbXBsM0szeTEyMzQ="
