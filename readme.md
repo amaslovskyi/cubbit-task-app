@@ -28,4 +28,3 @@ The second stage starts from the alpine:latest image:
 
 docker build -f docker/simple-go-app/Dockerfile -t shatten/cubbit-task-app:1.1 .
 docker push shatten/cubbit-task-app:1.1
-
