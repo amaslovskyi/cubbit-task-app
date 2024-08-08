@@ -4,7 +4,7 @@ This README explains how to set up and run the deployment pipeline for MyGoApp u
 
 ## Prerequisites
 
-1. A GitHub repository containing your application code and this workflow file.
+1. A GitHub repository containing application code and this workflow file.
 2. Docker Hub account for storing Here's a README.md file explaining how to set up and run the pipeline and its prerequisites:
 
 ```markdown
@@ -14,7 +14,7 @@ This README explains how to set up and run the CI/CD pipeline for deploying MyGo
 
 ## Prerequisites
 
-1. GitHub repository with your application code
+1. GitHub repository with application code
 2. DockerHub account
 3. K3s clusters for staging and production environments
 4. kubectl and Helm installed on your local machine (for testing)
