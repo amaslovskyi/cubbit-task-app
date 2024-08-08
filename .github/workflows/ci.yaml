@@ -64,9 +64,19 @@ jobs:
           name: kubeconfig
           path: ./kubeconfig
 
-  deploy:
-    needs: [prep_kubeconf, prep]
+  approve_prod:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - name: Manual approval for prod
+        run: echo "Deployment to prod approved"
+
+  deploy:
+    needs: [prep_kubeconf, prep, approve_prod]
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -88,3 +98,22 @@ jobs:
             --set image.tag=${{ needs.prep.outputs.commit_hash }} \
             --set environment=${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }} \
             --namespace ${{ github.ref == 'refs/heads/main' && 'prod-mygoapp-ns' || 'staging-mygoapp-ns' }}
+
+  test_deployment:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download kubeconfig
+        uses: actions/download-artifact@v2
+        with:
+          name: kubeconfig
+      - name: Set KUBECONFIG environment variable
+        run: echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
+      - name: Wait for deployment
+        run: |
+          kubectl rollout status deployment/mygoapp -n ${{ github.ref == 'refs/heads/main' && 'prod-mygoapp-ns' || 'staging-mygoapp-ns' }} --timeout=300s
+      - name: Test application availability
+        run: |
+          NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}')
+          NODE_PORT=$(kubectl get service mygoapp -n ${{ github.ref == 'refs/heads/main' && 'prod-mygoapp-ns' || 'staging-mygoapp-ns' }} -o jsonpath='{.spec.ports[0].nodePort}')
+          curl -f http://$NODE_IP:$NODE_PORT/api/status || exit 1
