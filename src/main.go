@@ -9,7 +9,8 @@ import (
 func main() {
 	apiKey := os.Getenv("API_KEY")
 	if apiKey == "" {
-		fmt.Println("Warning: API_KEY not set")
+		fmt.Println("API_KEY not set")
+		return
 	}
 
 	http.HandleFunc("/", helloHandler)
