@@ -136,3 +136,4 @@ jobs:
           # Because of no Load balancer is deploy need to setup NODE_IP value
           # Test the endpoint
           curl -f http://${NODE_IP}:$NODE_PORT/api/status || exit 1
+          
