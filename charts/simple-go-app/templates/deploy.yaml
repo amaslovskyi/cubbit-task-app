@@ -137,3 +137,4 @@ spec:
         - name: nginx-conf
           configMap:
             name: mygoapp-nginx-conf
+            
