@@ -28,7 +28,7 @@ spec:
         fsGroup: 82
       containers:
         - name: nginx
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          image: {{ .Values.ecrEndpoint }}/cubbit-task-nginx:{{ .Values.ecrImageId }}
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
@@ -39,8 +39,8 @@ spec:
                 name: mygoapp-nginx-conf
           resources:
             limits:
-              cpu: "150m"
-              memory: "200Mi"
+              cpu: "250m"
+              memory: "300Mi"
             requests:
               cpu: "50m"
               memory: "50Mi"
@@ -88,24 +88,24 @@ spec:
               secretKeyRef:
                 name: myapp-secret
                 key: API_KEY
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          image: {{ .Values.ecrEndpoint }}/cubbit-task-app:{{ .Values.ecrImageId }}
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
           ports:
-          - containerPort: 8888
+          - containerPort: 8080
           resources:
             limits:
-              cpu: "100m"
-              memory: "150Mi"
+              cpu: "250m"
+              memory: "300Mi"
             requests:
               cpu: "50m"
-              memory: "100Mi"
+              memory: "150Mi"
           startupProbe:
             httpGet:
               path: /api/status
-              port: 8888
+              port: 8080
               httpHeaders:
               - name: Host
                 value: localhost
@@ -116,7 +116,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /api/status
-              port: 8888
+              port: 8080
               httpHeaders:
               - name: Host
                 value: localhost
@@ -126,7 +126,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /api/status
-              port: 8888
+              port: 8080
               httpHeaders:
               - name: Host
                 value: localhost
