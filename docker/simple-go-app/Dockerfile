@@ -24,7 +24,7 @@ WORKDIR /root/
 COPY --from=builder /main .
 
 # Expose port 8080 to the outside world
-EXPOSE 8888
+EXPOSE 8080
 
 # Command to run the executable
 CMD ["./main"]
