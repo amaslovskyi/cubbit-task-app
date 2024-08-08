@@ -124,6 +124,15 @@ jobs:
           kubectl rollout status deployment/mygoapp -n ${{ github.ref == 'refs/heads/main' && 'prod-mygoapp-ns' || 'staging-mygoapp-ns' }} --timeout=300s
       - name: Test application availability
         run: |
-          NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}')
+          # Test the application status endpoint
           NODE_PORT=$(kubectl get service mygoapp-svc -n ${{ github.ref == 'refs/heads/main' && 'prod-mygoapp-ns' || 'staging-mygoapp-ns' }} -o jsonpath='{.spec.ports[0].nodePort}')
-          curl -f http://$NODE_IP:$NODE_PORT/api/status || exit 1
+          
+          # Use different NODE_IP based on the environment
+          if [[ ${{ github.ref }} == 'refs/heads/main' ]]; then
+            NODE_IP=${{ secrets.PROD_NODE_IP }}
+          else
+            NODE_IP=${{ secrets.STAGE_NODE_IP }}
+          fi
+          # Because of no Load balancer is deploy need to setup NODE_IP value
+          # Test the endpoint
+          curl -f http://${NODE_IP}:$NODE_PORT/api/status || exit 1
