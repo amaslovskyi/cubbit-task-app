@@ -7,6 +7,7 @@ on:
       - staging
 
 jobs:
+  # Prepare commit hash for Docker image tagging
   prep:
     runs-on: ubuntu-latest
     outputs:
@@ -17,11 +18,13 @@ jobs:
       - name: Get short commit hash
         id: get_commit_hash
         run: echo "commit_hash=$(git rev-parse --short=7 HEAD)" >> $GITHUB_OUTPUT
-
+  
+  # Build and push Docker images for Nginx and the Go app
   docker:
     needs: prep
     runs-on: ubuntu-latest
     steps:
+      # ... (steps for Docker setup and login)
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Set up Docker Buildx
@@ -37,7 +40,8 @@ jobs:
       - name: Build and Push Docker Image App
         run: |
           docker buildx build --platform linux/arm64 -f ./docker/simple-go-app/Dockerfile -t ${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-app:${{ needs.prep.outputs.commit_hash }} --push .
-
+ 
+  # Prepare Kubernetes configuration
   prep_kubeconf:
     needs: docker
     runs-on: ubuntu-latest
@@ -64,6 +68,7 @@ jobs:
           name: kubeconfig
           path: ./kubeconfig
 
+  # Manual approval step for production deployment
   approve_prod:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -71,7 +76,8 @@ jobs:
     steps:
       - name: Manual approval for prod
         run: echo "Deployment to prod approved"
-
+  
+  # Deploy the application using Helm
   deploy:
     needs: [prep_kubeconf, prep]
     runs-on: ubuntu-latest
@@ -109,6 +115,7 @@ jobs:
             --set environment=${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }} \
             --namespace ${{ github.ref == 'refs/heads/main' && 'prod-mygoapp-ns' || 'staging-mygoapp-ns' }}
 
+  # Test the deployed application
   test_deployment:
     needs: deploy
     runs-on: ubuntu-latest
@@ -136,4 +143,3 @@ jobs:
           # Because of no Load balancer is deploy need to setup NODE_IP value
           # Test the endpoint
           curl -f http://${NODE_IP}:$NODE_PORT/api/status || exit 1
-          
