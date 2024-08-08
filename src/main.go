@@ -3,16 +3,9 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os"
 )
 
 func main() {
-	apiKey := os.Getenv("API_KEY")
-	if apiKey == "" {
-		fmt.Println("API_KEY not set")
-		return
-	}
-
 	http.HandleFunc("/", helloHandler)
 
 	fmt.Println("Server is running on http://localhost:8081")
@@ -23,5 +16,5 @@ func main() {
 }
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello, World! API Key: %s", os.Getenv("API_KEY"))
+	fmt.Fprintf(w, "Hello, World!")
 }
