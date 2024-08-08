@@ -87,5 +87,4 @@ jobs:
             --set image.repository=${{ secrets.DOCKER_HUB_USER_NAME }}/cubbit-task-app \
             --set image.tag=${{ needs.prep.outputs.commit_hash }} \
             --set environment=${{ github.ref == 'refs/heads/main' && 'prod' || 'staging' }} \
-            --set apiKey=${{ secrets.API_KEY }} \
             --namespace ${{ github.ref == 'refs/heads/main' && 'prod-mygoapp-ns' || 'staging-mygoapp-ns' }}
