@@ -1,30 +1,60 @@
-This Go program does the following:
+# MyGoApp Deployment Pipeline
 
-1.We import the necessary packages: fmt for printing to the console and net/http for creating the HTTP server.
-2.In the main function:
-We use http.HandleFunc("/", helloHandler) to register the helloHandler function to handle requests to the root path ("/").
-We print a message to the console indicating that the server is running.
-We start the server using http.ListenAndServe(":8080", nil), which makes the server listen on port 8080.
-If there's an error starting the server, we print the error message.
-3.The helloHandler function is defined to handle incoming HTTP requests:
-It takes two parameters: w (http.ResponseWriter) to write the response, and r (*http.Request) which contains information about the request.
-It uses fmt.Fprintf(w, "Hello, World!") to write the "Hello, World!" message to the response.
+This README explains how to set up and run the deployment pipeline for MyGoApp using GitHub Actions.
 
-Docker
+## Prerequisites
 
-This Dockerfile defines a multi-stage build process for a Go application:
-1.The first stage uses the golang:1.20-alpine image as the base and is named "builder".
-2.It sets the working directory to /app.
-3.It copies Go source files from the ../src/ directory into the container.
-4.It initializes a Go module named "main".
-5.It builds the Go application with specific flags for a Linux environment.
+1. A GitHub repository containing application code and this workflow file.
+2. Docker Hub account for storing Here's a README.md file explaining how to set up and run the pipeline and its prerequisites:
 
-The second stage starts from the alpine:latest image:
-1.It installs CA certificates.
-2.Sets the working directory to /root/.
-3.Copies the compiled binary from the first stage.
-4.Exposes port 8080.
-5.Specifies the command to run the executable.
+```markdown
+# MyGoApp Deployment Pipeline
 
-docker build -f docker/simple-go-app/Dockerfile -t shatten/cubbit-task-app:1.1 .
-docker push shatten/cubbit-task-app:1.1
+This README explains how to set up and run the CI/CD pipeline for deploying MyGoApp to a K3s cluster.
+
+## Prerequisites
+
+1. GitHub repository with application code
+2. DockerHub account
+3. K3s clusters for staging and production environments
+4. kubectl and Helm installed on your local machine (for testing)
+
+## Setup
+
+1. Fork or clone this repository to your GitHub account.
+
+2. Set up the following secrets in your GitHub repository:
+
+   - `DOCKER_HUB_USER_NAME`: Your DockerHub username
+   - `DOCKER_HUB_ACCESS_TOKEN`: Your DockerHub access token
+   - `STAGING_KUBECONFIG`: Base64 encoded kubeconfig for the staging cluster
+   - `PROD_KUBECONFIG`: Base64 encoded kubeconfig for the production cluster
+   - `STAGE_NODE_IP`: IP address of a node in your staging cluster
+   - `PROD_NODE_IP`: IP address of a node in your production cluster
+
+3. Ensure your repository has the following structure:
+
+## Running the Pipeline
+
+The pipeline is triggered automatically on pushes to the `main` and `staging` branches.
+
+1. For staging deployments:
+- Push your changes to the `staging` branch
+- The pipeline will build, push, and deploy to the staging environment
+
+2. For production deployments:
+- Push your changes to the `main` branch
+- The pipeline will build and push the images
+- A manual approval step will be required
+- After approval, the pipeline will deploy to the production environment
+
+## Monitoring and Troubleshooting
+
+- Monitor the pipeline progress in the "Actions" tab of your GitHub repository
+- Check the logs of each step for any errors or issues
+- Ensure your K3s clusters are accessible and properly configured
+- Verify that all required secrets are set correctly in your GitHub repository
+
+## Note
+
+This pipeline assumes you're using K3s clusters. If you're using a different Kubernetes distribution, you may need to adjust the deployment steps accordingly.
