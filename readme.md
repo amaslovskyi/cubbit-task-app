@@ -55,6 +55,6 @@ The pipeline is triggered automatically on pushes to the `main` and `staging` br
 - Ensure your K3s clusters are accessible and properly configured
 - Verify that all required secrets are set correctly in your GitHub repository
 
-## Note
+### Note
 
 This pipeline assumes you're using K3s clusters. If you're using a different Kubernetes distribution, you may need to adjust the deployment steps accordingly.
